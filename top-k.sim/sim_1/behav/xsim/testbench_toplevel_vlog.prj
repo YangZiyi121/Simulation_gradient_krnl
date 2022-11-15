@@ -1,0 +1,18 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  \
+"../../../../top-k.gen/sources_1/ip/floating_point_0/sim/floating_point_0.v" \
+"../../../../top-k.gen/sources_1/ip/floating_point_1/sim/floating_point_1.v" \
+"../../../../top-k.gen/sources_1/ip/floating_point_2/sim/floating_point_2.v" \
+"../../../../top-k.srcs/sources_1/new/FIFO_stream.v" \
+"../../../../top-k.srcs/sources_1/new/N_sync.v" \
+"../../../../top-k.srcs/sources_1/new/batch_gradient_adder.v" \
+"../../../../top-k.srcs/sources_1/new/batch_gradient_calculator.v" \
+"../../../../top-k.srcs/sources_1/new/loopback_top.v" \
+"../../../../top-k.srcs/sources_1/new/nukv_fifogen.v" \
+"../../../../top-k.srcs/sources_1/new/packet_state.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

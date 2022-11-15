@@ -224,7 +224,7 @@ module tcp_top_loopback #(
     .s_axis_rx_data_TVALID(intValid),
     .s_axis_rx_data_TLAST(intLast), //batch last
     .s_axis_rx_data_TDATA(intData),
-    .batch_gradient_TDATA(fromAdderData[31:0]),
+    .batch_gradient_TDATA(fromAdderData),
     .batch_gradient_TVALID(fromAdderValid)
     //.packet_gradient_TLAST(fromAdderData[512])
     );
@@ -273,7 +273,8 @@ module tcp_top_loopback #(
     assign fromAdderRead = splitPreReady;
     assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[512];
     //assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[32];
-    assign splitPreData[63+32:0] = {fromAdderData[511:0],sesspackMeta};
+    //assign splitPreData[63+32:0] = {fromAdderData[511:0],sesspackMeta};
+    assign splitPreData[63+512:0] = {fromAdderData[511:0],sesspackMeta};
     //assign splitPreData[63+32:0] = {fromAdderData[31:0],sesspackMeta};
     assign splitPreData[64+512] = fromAdderData[512]; 
     //assign splitPreData[64+32] = fromAdderData[32]; // last signal

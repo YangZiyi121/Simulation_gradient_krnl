@@ -268,7 +268,7 @@ begin
   end process;
 
   stim_data: process
-    file datafile : text is in "../../session-data-in.txt";
+    file datafile : text is in "../../session-data-in-simple.txt";
     variable datinline : line;
     variable dattype : std_logic_vector(15 downto 0);
     variable datdata : std_logic_Vector(512+3 downto 0);
