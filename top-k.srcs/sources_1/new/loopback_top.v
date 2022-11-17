@@ -21,60 +21,60 @@ module tcp_top_loopback #(
       )
       (
 
-			  input 	    aclk,
-			  input 	    aresetn,
+			  input wire    aclk,
+			  input wire    aresetn,
 
-			  output 	    m_axis_open_connection_TVALID,
-			  input 	    m_axis_open_connection_TREADY,
-			  output [47:0]     m_axis_open_connection_TDATA,
+			  output wire	    m_axis_open_connection_TVALID,
+			  input  wire 	    m_axis_open_connection_TREADY,
+			  output  wire[47:0]     m_axis_open_connection_TDATA,
 
-			  input 	    s_axis_open_status_TVALID,
-			  output 	    s_axis_open_status_TREADY,
-			  input [23:0] 	    s_axis_open_status_TDATA,
+			  input  wire 	    s_axis_open_status_TVALID,
+			  output  wire     s_axis_open_status_TREADY,
+			  input  wire[23:0] 	    s_axis_open_status_TDATA,
 
-			  output 	    m_axis_close_connection_TVALID,
-			  input 	    m_axis_close_connection_TREADY,
-			  output [15:0]     m_axis_close_connection_TDATA,
+			  output  wire 	    m_axis_close_connection_TVALID,
+			  input   wire     m_axis_close_connection_TREADY,
+			  output  wire [15:0]     m_axis_close_connection_TDATA,
 
-			  output 	    m_axis_listen_port_TVALID,
-			  input 	    m_axis_listen_port_TREADY,
-			  output [15:0]     m_axis_listen_port_TDATA,
+			  output  wire 	    m_axis_listen_port_TVALID,
+			  input  wire    m_axis_listen_port_TREADY,
+			  output  wire [15:0]     m_axis_listen_port_TDATA,
 
-			  input 	    s_axis_listen_port_status_TVALID,
-			  output 	    s_axis_listen_port_status_TREADY,
-			  input [7:0] 	    s_axis_listen_port_status_TDATA,
+			  input  wire 	    s_axis_listen_port_status_TVALID,
+			  output  wire  s_axis_listen_port_status_TREADY,
+			  input  wire [7:0] 	    s_axis_listen_port_status_TDATA,
 
-			  input 	    s_axis_notifications_TVALID,
-			  output 	    s_axis_notifications_TREADY,
-			  input [87:0] 	    s_axis_notifications_TDATA,
+			  input  wire 	    s_axis_notifications_TVALID,
+			  output  wire    s_axis_notifications_TREADY,
+			  input  wire [87:0] 	    s_axis_notifications_TDATA,
 
-			  output 	    m_axis_read_package_TVALID,
-			  input 	    m_axis_read_package_TREADY,
-			  output [31:0]     m_axis_read_package_TDATA,
+			  output  wire     m_axis_read_package_TVALID,
+			  input  wire    m_axis_read_package_TREADY,
+			  output  wire [31:0]     m_axis_read_package_TDATA,
 
-			  output 	    m_axis_tx_data_TVALID,
-			  input 	    m_axis_tx_data_TREADY,
-			  output [511:0]     m_axis_tx_data_TDATA,
-			  output [64:0] 	    m_axis_tx_data_TKEEP,
-			  output  	    m_axis_tx_data_TLAST,
+			  output  wire     m_axis_tx_data_TVALID,
+			  input  wire   m_axis_tx_data_TREADY,
+			  output  wire [511:0]     m_axis_tx_data_TDATA,
+			  output  wire [64:0] 	    m_axis_tx_data_TKEEP,
+			  output   wire     m_axis_tx_data_TLAST,
 
-			  output  	    m_axis_tx_metadata_TVALID,
-			  input 	    m_axis_tx_metadata_TREADY,
-			  output  [15:0] m_axis_tx_metadata_TDATA,
+			  output  reg	    m_axis_tx_metadata_TVALID, //for handshake logic
+			  input  wire     m_axis_tx_metadata_TREADY,
+			  output  reg [15:0] m_axis_tx_metadata_TDATA, //for handshake logic
 
-			  input 	    s_axis_tx_status_TVALID,
-			  output 	    s_axis_tx_status_TREADY,
-			  input [63:0] 	    s_axis_tx_status_TDATA,
+			  input  wire     s_axis_tx_status_TVALID,
+			  output  wire    s_axis_tx_status_TREADY,
+			  input  wire [63:0] 	    s_axis_tx_status_TDATA,
 
-			  input 	    s_axis_rx_data_TVALID,
-			  output 	    s_axis_rx_data_TREADY,
-			  input [511:0] 	    s_axis_rx_data_TDATA,
-			  input [63:0] 	    s_axis_rx_data_TKEEP,
-			  input [0:0] 	    s_axis_rx_data_TLAST,
+			  input  wire 	    s_axis_rx_data_TVALID,
+			  output  wire     s_axis_rx_data_TREADY,
+			  input  wire [511:0] 	    s_axis_rx_data_TDATA,
+			  input  wire [63:0] 	    s_axis_rx_data_TKEEP,
+			  input  wire [0:0] 	    s_axis_rx_data_TLAST,
 
-			  input 	    s_axis_rx_metadata_TVALID,
-			  output 	    s_axis_rx_metadata_TREADY,
-			  input [15:0] 	    s_axis_rx_metadata_TDATA
+			  input  wire 	    s_axis_rx_metadata_TVALID,
+			  output  wire 	    s_axis_rx_metadata_TREADY,
+			  input  wire [15:0] 	    s_axis_rx_metadata_TDATA
 			  
 			  
 			  
@@ -306,7 +306,7 @@ module tcp_top_loopback #(
    assign   m_axis_tx_data_TKEEP = 64'hFFFFFFFFFFFFFFFF;
    assign   maxis_tx_last = finalOutValid & finalOutLast;
    
-   assign   finalOutReady = maxis_meta_ready & maxis_tx_ready;
+  assign   finalOutReady = maxis_meta_ready & maxis_tx_ready;
    
    assign   maxis_meta_data = finalOutData[15:0];
    assign   maxis_meta_valid = finalOutValid & finalOutReady & finalOutLast;
@@ -331,19 +331,98 @@ module tcp_top_loopback #(
   assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[512];     
   //assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[32];             
                     
-   nukv_fifogen #(
-              .DATA_SIZE(16),
-              .ADDR_BITS(4)
-          ) output_net_meta_buffer (
-                  .clk(clk),
-                  .rst(reset),
-                  .s_axis_tvalid(maxis_meta_valid),
-                  .s_axis_tready(maxis_meta_ready),
-                  .s_axis_tdata(maxis_meta_data),  
-                  .m_axis_tvalid(m_axis_tx_metadata_TVALID),
-                  .m_axis_tready(m_axis_tx_metadata_TREADY),
-                  .m_axis_tdata(m_axis_tx_metadata_TDATA)
-                  ); 
+  ////////////handshake logic start/////////////////////////////////
+  wire out_meta_valid;
+  reg out_meta_ready;
+  reg[7:0] waitingForStatusWord;
+  reg waitingForFirstPacket;
+  wire [15:0] out_meta_data; 
+  reg[7:0] dataTokens;
+  reg killNext;
+  reg killThis;
+   always @(posedge aclk) begin
+      if(reset) begin
+        m_axis_tx_metadata_TDATA <= 0;
+        m_axis_tx_metadata_TVALID <= 0;
+        out_meta_ready <= 0;      
+        waitingForStatusWord <= 0;
+        waitingForFirstPacket <= 1;
+        dataTokens <= 0;
+        killThis <= 0;
+        killNext <= 0;
+      end else begin
+
+        if (finalOutValid==1) begin
+          waitingForFirstPacket <= 0;
+        end
+        
+        if (m_axis_tx_metadata_TREADY==1 && m_axis_tx_metadata_TVALID==1) begin
+          m_axis_tx_metadata_TVALID <= 0;
+        end
+
+        if (out_meta_ready==1 && out_meta_valid==1) begin
+          out_meta_ready <= 0;
+        end 
+
+        if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin
+          dataTokens <= dataTokens-1;
+        end
+
+        if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin          
+            killThis <= killNext;       
+            killNext <= 0; 
+        end
+
+        if (waitingForStatusWord==0 && out_meta_ready==0 && killNext==0) begin
+
+          if (m_axis_tx_metadata_TREADY==1) begin
+            m_axis_tx_metadata_TVALID <= out_meta_valid;
+            m_axis_tx_metadata_TDATA <= out_meta_data;
+
+            if (out_meta_valid==1) begin
+              waitingForStatusWord <= waitingForStatusWord+1;
+            end
+          end
+
+        end else if (waitingForStatusWord==1 && out_meta_ready==0 && killNext==0) begin
+
+          if (s_axis_tx_status_TVALID==1) begin
+            waitingForStatusWord <= waitingForStatusWord-1;
+
+            if (s_axis_tx_status_TDATA[63:62]==0 || s_axis_tx_status_TDATA[63:62]==1) begin
+              // no error   or no connection (1)
+              out_meta_ready <= 1;
+              dataTokens <= dataTokens+1;
+
+              if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin
+                dataTokens <= dataTokens;
+              end              
+
+              if (s_axis_tx_status_TDATA[63:62]==1) begin
+                killNext <= 1;      
+              end
+
+            end
+          end
+
+        end
+
+      end
+    end
+  ////////////handshake logic end///////////////////////////////////
+//   nukv_fifogen #(
+//              .DATA_SIZE(16),
+//              .ADDR_BITS(4)
+//          ) output_net_meta_buffer (
+//                  .clk(clk),
+//                  .rst(reset),
+//                  .s_axis_tvalid(maxis_meta_valid),
+//                  .s_axis_tready(maxis_meta_ready),
+//                  .s_axis_tdata(maxis_meta_data),  
+//                  .m_axis_tvalid(m_axis_tx_metadata_TVALID),
+//                  .m_axis_tready(m_axis_tx_metadata_TREADY),
+//                  .m_axis_tdata(m_axis_tx_metadata_TDATA)
+//                  ); 
 
 
 
