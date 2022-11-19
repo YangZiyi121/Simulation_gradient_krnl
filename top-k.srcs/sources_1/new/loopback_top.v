@@ -117,7 +117,8 @@ module tcp_top_loopback #(
    wire 				    sesspackValid;
    wire             sesspackMetaValid;
    wire             sesspackReady;
-   wire 				    sesspackMetaReady;
+   //wire 				    sesspackMetaReady;
+   reg                      sesspackMetaReady;
    wire 				    sesspackLast;
    wire [63:0] 				    sesspackData;
    wire [63:0] 				    sesspackMeta;
@@ -195,7 +196,7 @@ module tcp_top_loopback #(
   wire[31:0] intCount;
   wire intValid;
   wire intLast;
-  wire intREADY;
+  wire intReady;
   
   packet_state packet_state_inst (
     .clk(clk),
@@ -270,8 +271,8 @@ module tcp_top_loopback #(
 
 
     assign splitPreValid = fromAdderValid & sesspackMetaValid;
-    assign fromAdderRead = splitPreReady;
-    assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[512];
+    assign fromAdderReady = splitPreReady;
+    //assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[512];
     //assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[32];
     //assign splitPreData[63+32:0] = {fromAdderData[511:0],sesspackMeta};
     assign splitPreData[63+512:0] = {fromAdderData[511:0],sesspackMeta};
@@ -332,11 +333,11 @@ module tcp_top_loopback #(
   //assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[32];             
                     
   ////////////handshake logic start/////////////////////////////////
-  wire out_meta_valid;
-  reg out_meta_ready;
+  //wire out_meta_valid;  //sesspackMetaValid
+  //reg out_meta_ready; //sesspackMetaReady
   reg[7:0] waitingForStatusWord;
   reg waitingForFirstPacket;
-  wire [15:0] out_meta_data; 
+  //wire [15:0] out_meta_data; //sesspackMeta
   reg[7:0] dataTokens;
   reg killNext;
   reg killThis;
@@ -344,7 +345,7 @@ module tcp_top_loopback #(
       if(reset) begin
         m_axis_tx_metadata_TDATA <= 0;
         m_axis_tx_metadata_TVALID <= 0;
-        out_meta_ready <= 0;      
+        sesspackMetaReady <= 0;      
         waitingForStatusWord <= 0;
         waitingForFirstPacket <= 1;
         dataTokens <= 0;
@@ -360,8 +361,8 @@ module tcp_top_loopback #(
           m_axis_tx_metadata_TVALID <= 0;
         end
 
-        if (out_meta_ready==1 && out_meta_valid==1) begin
-          out_meta_ready <= 0;
+        if ( sesspackMetaReady ==1 && sesspackMetaValid==1) begin
+           sesspackMetaReady <= 0;
         end 
 
         if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin
@@ -373,25 +374,25 @@ module tcp_top_loopback #(
             killNext <= 0; 
         end
 
-        if (waitingForStatusWord==0 && out_meta_ready==0 && killNext==0) begin
+        if (waitingForStatusWord==0 &&  sesspackMetaReady ==0 && killNext==0) begin
 
           if (m_axis_tx_metadata_TREADY==1) begin
-            m_axis_tx_metadata_TVALID <= out_meta_valid;
-            m_axis_tx_metadata_TDATA <= out_meta_data;
+            m_axis_tx_metadata_TVALID <= sesspackMetaValid;
+            m_axis_tx_metadata_TDATA <= sesspackMeta;
 
-            if (out_meta_valid==1) begin
+            if (sesspackMetaValid==1) begin
               waitingForStatusWord <= waitingForStatusWord+1;
             end
           end
 
-        end else if (waitingForStatusWord==1 && out_meta_ready==0 && killNext==0) begin
+        end else if (waitingForStatusWord==1 &&  sesspackMetaReady ==0 && killNext==0) begin
 
           if (s_axis_tx_status_TVALID==1) begin
             waitingForStatusWord <= waitingForStatusWord-1;
 
             if (s_axis_tx_status_TDATA[63:62]==0 || s_axis_tx_status_TDATA[63:62]==1) begin
               // no error   or no connection (1)
-              out_meta_ready <= 1;
+               sesspackMetaReady <= 1;
               dataTokens <= dataTokens+1;
 
               if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin
