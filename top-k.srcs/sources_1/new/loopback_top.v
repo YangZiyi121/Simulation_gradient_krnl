@@ -124,14 +124,14 @@ module tcp_top_loopback #(
    wire [63:0] 				    sesspackMeta;
    
    
-   (* mark_debug = "true" *) wire[511:0] maxis_tx_data;
-   (* mark_debug = "true" *) wire maxis_tx_last;
-   (* mark_debug = "true" *) wire maxis_tx_ready;
-   (* mark_debug = "true" *) wire maxis_tx_valid;
+   //(* mark_debug = "true" *) wire[511:0] maxis_tx_data;
+   //(* mark_debug = "true" *) wire maxis_tx_last;
+   //(* mark_debug = "true" *) wire maxis_tx_ready;
+   //(* mark_debug = "true" *) wire maxis_tx_valid;
    
-   (* mark_debug = "true" *) wire[15:0] maxis_meta_data;   
-   (* mark_debug = "true" *) wire maxis_meta_ready;
-   (* mark_debug = "true" *) wire maxis_meta_valid;
+   //(* mark_debug = "true" *) wire[15:0] maxis_meta_data;   
+   //(* mark_debug = "true" *) wire maxis_meta_ready;
+   //(* mark_debug = "true" *) wire maxis_meta_valid;
  
    
    reg [15:0] myClock;
@@ -270,14 +270,16 @@ module tcp_top_loopback #(
                 ); 
 
 
-    assign splitPreValid = fromAdderValid & sesspackMetaValid;
+    //assign splitPreValid = fromAdderValid & sesspackMetaValid;
+    assign splitPreValid = fromAdderValid;
     assign fromAdderReady = splitPreReady;
     //assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[512];
     //assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[32];
     //assign splitPreData[63+32:0] = {fromAdderData[511:0],sesspackMeta};
     assign splitPreData[63+512:0] = {fromAdderData[511:0],sesspackMeta};
     //assign splitPreData[63+32:0] = {fromAdderData[31:0],sesspackMeta};
-    assign splitPreData[64+512] = fromAdderData[512]; 
+    //assign splitPreData[64+512] = fromAdderData[512]; 
+    assign splitPreData[64+512] = 1'b0;
     //assign splitPreData[64+32] = fromAdderData[32]; // last signal
        
    nukv_fifogen #(
@@ -298,47 +300,57 @@ module tcp_top_loopback #(
    
    wire ignoreWrites;
    wire ignoreProps;
+   reg[7:0] dataTokens;
 
    assign   finalOutLast = finalOutData[512+64];
    //assign finalOutLast = finalOutData[32+64];
-   assign   maxis_tx_valid = finalOutValid & finalOutReady;
-   assign   maxis_tx_data = finalOutData[511+64:64];
+   //assign   maxis_tx_valid = finalOutValid & finalOutReady;
+  // assign   maxis_tx_data = finalOutData[511+64:64];
   //assign   maxis_tx_data = finalOutData[31+64:64];
    assign   m_axis_tx_data_TKEEP = 64'hFFFFFFFFFFFFFFFF;
-   assign   maxis_tx_last = finalOutValid & finalOutLast;
+   //assign   maxis_tx_last = finalOutValid & finalOutLast;
    
-  assign   finalOutReady = maxis_meta_ready & maxis_tx_ready;
+  //assign   finalOutReady = maxis_meta_ready & maxis_tx_ready;
+   assign   finalOutReady =  dataTokens == 0 ? 0 :  m_axis_tx_data_TREADY; //change how to assign finalOutReady
    
-   assign   maxis_meta_data = finalOutData[15:0];
-   assign   maxis_meta_valid = finalOutValid & finalOutReady & finalOutLast;
+   //assign   maxis_meta_data = finalOutData[15:0];
+   //assign   maxis_meta_valid = finalOutValid & finalOutReady & finalOutLast;
 
-   wire [512:0] m_axis_tx_data_COMBINED;
+   //wire [512:0] m_axis_tx_data_COMBINED;
    //wire [32:0] m_axis_tx_data_COMBINED;
-   nukv_fifogen #(
-                 .DATA_SIZE(512+1),
-                 .ADDR_BITS(8)
-             ) output_net_data_buffer (
-                     .clk(clk),
-                     .rst(reset),
-                     .s_axis_tvalid(maxis_tx_valid),
-                     .s_axis_tready(maxis_tx_ready),
-                     .s_axis_tdata({maxis_tx_last,maxis_tx_data}),  
-                     .m_axis_tvalid(m_axis_tx_data_TVALID),
-                     .m_axis_tready(m_axis_tx_data_TREADY),
-                     .m_axis_tdata(m_axis_tx_data_COMBINED)
-                     ); 
-  assign m_axis_tx_data_TDATA = m_axis_tx_data_COMBINED[511:0];
+//   nukv_fifogen #(
+//                 .DATA_SIZE(512+1),
+//                 .ADDR_BITS(8)
+//             ) output_net_data_buffer (
+//                     .clk(clk),
+//                     .rst(reset),
+//                     .s_axis_tvalid(maxis_tx_valid),
+//                     .s_axis_tready(maxis_tx_ready),
+//                     .s_axis_tdata({maxis_tx_last,maxis_tx_data}),  
+//                     .m_axis_tvalid(m_axis_tx_data_TVALID),
+//                     .m_axis_tready(m_axis_tx_data_TREADY),
+//                     .m_axis_tdata(m_axis_tx_data_COMBINED)
+//                     ); 
+  //assign m_axis_tx_data_TDATA = m_axis_tx_data_COMBINED[511:0];
+  assign m_axis_tx_data_TDATA = finalOutData[512+64:64];
   //assign m_axis_tx_data_TDATA = m_axis_tx_data_COMBINED[31:0];
-  assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[512];     
-  //assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[32];             
+  //assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[512]; 
+  assign m_axis_tx_data_TLAST = finalOutData[512+64];
+  //assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[32];
+  assign m_axis_tx_data_TVALID = finalOutValid & finalOutReady;      
                     
-  ////////////handshake logic start/////////////////////////////////
+  ////////////handshake logic start////////////////////////////////
+  ///////Send meta data first wait for reply of status/////////////
+  //////////////////////Then send data packet//////////////////////
+  ////////////finalOutData --> store all data//////////////////////
+  ////////sesspackMetaData --> store all meta data/////////////////
+  
+  
   //wire out_meta_valid;  //sesspackMetaValid
   //reg out_meta_ready; //sesspackMetaReady
   reg[7:0] waitingForStatusWord;
   reg waitingForFirstPacket;
   //wire [15:0] out_meta_data; //sesspackMeta
-  reg[7:0] dataTokens;
   reg killNext;
   reg killThis;
    always @(posedge aclk) begin
@@ -346,38 +358,38 @@ module tcp_top_loopback #(
         m_axis_tx_metadata_TDATA <= 0;
         m_axis_tx_metadata_TVALID <= 0;
         sesspackMetaReady <= 0;      
-        waitingForStatusWord <= 0;
+        waitingForStatusWord <= 0; 
         waitingForFirstPacket <= 1;
         dataTokens <= 0;
         killThis <= 0;
         killNext <= 0;
       end else begin
 
-        if (finalOutValid==1) begin
-          waitingForFirstPacket <= 0;
+        if (finalOutValid==1) begin //The meta + data queue is ready, the first packet is ready
+          waitingForFirstPacket <= 0; 
         end
         
-        if (m_axis_tx_metadata_TREADY==1 && m_axis_tx_metadata_TVALID==1) begin
-          m_axis_tx_metadata_TVALID <= 0;
+        if (m_axis_tx_metadata_TREADY==1 && m_axis_tx_metadata_TVALID==1) begin //Input, ready for accepting the next metadata, Output the next metadata is valid
+          m_axis_tx_metadata_TVALID <= 0;  //waiting for outputing next meta data
         end
 
-        if ( sesspackMetaReady ==1 && sesspackMetaValid==1) begin
+        if (sesspackMetaReady ==1 && sesspackMetaValid==1) begin // Process meatadata input
            sesspackMetaReady <= 0;
         end 
 
-        if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin
+        if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin //The last line of the session
           dataTokens <= dataTokens-1;
         end
 
-        if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin          
+        if (finalOutValid==1 && finalOutReady==1 && finalOutLast==1) begin  //move to the next session
             killThis <= killNext;       
             killNext <= 0; 
         end
 
-        if (waitingForStatusWord==0 &&  sesspackMetaReady ==0 && killNext==0) begin
+        if (waitingForStatusWord==0 &&  sesspackMetaReady ==0 && killNext==0) begin //send the metadata stage
 
           if (m_axis_tx_metadata_TREADY==1) begin
-            m_axis_tx_metadata_TVALID <= sesspackMetaValid;
+            m_axis_tx_metadata_TVALID <= sesspackMetaValid; 
             m_axis_tx_metadata_TDATA <= sesspackMeta;
 
             if (sesspackMetaValid==1) begin
@@ -385,7 +397,7 @@ module tcp_top_loopback #(
             end
           end
 
-        end else if (waitingForStatusWord==1 &&  sesspackMetaReady ==0 && killNext==0) begin
+        end else if (waitingForStatusWord==1 &&  sesspackMetaReady ==0 && killNext==0) begin //get the reply of status 
 
           if (s_axis_tx_status_TVALID==1) begin
             waitingForStatusWord <= waitingForStatusWord-1;
