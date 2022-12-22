@@ -34,6 +34,7 @@ module batch_gradient_calculator #(
     input [511:0] s_axis_rx_data_TDATA,
     output [511:0] batch_gradient_TDATA,
     output batch_gradient_TVALID,
+    output batch_gradient_TLAST,
     output s_axis_rx_data_TREADY
     );
     
@@ -45,6 +46,8 @@ module batch_gradient_calculator #(
     wire [31:0] N_TDATA_forFIFO;
     //wire divider_TVALID;
     wire [31:0]divider_TDATA;
+    
+    wire divider_out_TVALID;
 
     
     //batch gradient result adder
@@ -60,10 +63,12 @@ module batch_gradient_calculator #(
     );
     //divider
     floating_point_1 divider_inst(.aclk(clk), .s_axis_a_tvalid(dividend_TVALID), .s_axis_a_tdata(dividend_TDATA), .s_axis_b_tvalid(dividend_TVALID), .s_axis_b_tdata(divider_TDATA),
-     .m_axis_result_tvalid(batch_gradient_TVALID), .m_axis_result_tdata(batch_gradient_TDATA[31:0]) ,.m_axis_result_tready(1'b1));
+     .m_axis_result_tvalid(divider_out_TVALID), .m_axis_result_tdata(batch_gradient_TDATA[31:0]) ,.m_axis_result_tready(1'b1));
     
      assign batch_gradient_TDATA[511: 32] = 480'b0;
-    
+     assign batch_gradient_TVALID = divider_out_TVALID;
+     assign batch_gradient_TLAST = divider_out_TVALID;
+         
 //    always@(posedge clk) begin
 //        dividend_TVALID <= dividend_TVALID_inter;
 //        dividend_TDATA <= dividend_TDATA_inter;

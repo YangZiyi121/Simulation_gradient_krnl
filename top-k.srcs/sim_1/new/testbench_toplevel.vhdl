@@ -72,7 +72,7 @@ architecture bench of testbench_toplevel is
       
       m_axis_tx_metadata_TVALID : out std_logic;
       m_axis_tx_metadata_TREADY : in std_logic;
-      m_axis_tx_metadata_TDATA: out std_logic_vector(15 downto 0);
+      m_axis_tx_metadata_TDATA: out std_logic_vector(31 downto 0);
       
       s_axis_tx_status_TVALID : in std_logic;
       s_axis_tx_status_TREADY : out std_logic;
@@ -115,7 +115,7 @@ architecture bench of testbench_toplevel is
   signal out_last: std_logic_vector(0 downto 0);
   signal out_data: std_logic_vector(511 downto 0);
   signal out_meta_valid : std_logic;
-  signal out_meta: std_logic_vector(15 downto 0) ;
+  signal out_meta: std_logic_vector(31 downto 0) ;
 
   signal tx_status_data : std_logic_vector(63 downto 0);
   signal tx_status_valid : std_logic;

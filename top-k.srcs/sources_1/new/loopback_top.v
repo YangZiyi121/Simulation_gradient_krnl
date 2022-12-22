@@ -55,12 +55,12 @@ module tcp_top_loopback #(
 			  output  wire     m_axis_tx_data_TVALID,
 			  input  wire   m_axis_tx_data_TREADY,
 			  output  wire [511:0]     m_axis_tx_data_TDATA,
-			  output  wire [64:0] 	    m_axis_tx_data_TKEEP,
+			  output  wire [63:0] 	    m_axis_tx_data_TKEEP,
 			  output   wire     m_axis_tx_data_TLAST,
 
 			  output  reg	    m_axis_tx_metadata_TVALID, //for handshake logic
 			  input  wire     m_axis_tx_metadata_TREADY,
-			  output  reg [15:0] m_axis_tx_metadata_TDATA, //for handshake logic
+			  output  reg [31:0] m_axis_tx_metadata_TDATA, //for handshake logic
 
 			  input  wire     s_axis_tx_status_TVALID,
 			  output  wire    s_axis_tx_status_TREADY,
@@ -101,18 +101,18 @@ module tcp_top_loopback #(
    wire [512:0] 				    toAdderData;
    wire 				    toAdderReady;
    
-      wire 				    fromAdderValid;
+   wire 				    fromAdderValid;
    wire [512:0] 				    fromAdderData;
    wire 				    fromAdderReady;
    
    (* mark_debug = "true" *) wire 				    splitPreValid;
    (* mark_debug = "true" *) wire                     splitPreReady;
-   (* mark_debug = "true" *) wire [64+512+1:0]                     splitPreData;   
+   (* mark_debug = "true" *) wire [64+511+1:0]                     splitPreData;   
 
    wire 				    finalOutValid;
    wire                     finalOutReady;
    wire                     finalOutLast;
-   wire [64+512+1:0]                     finalOutData;    
+   wire [64+511+1:0]                     finalOutData;    
 
    wire 				    sesspackValid;
    wire             sesspackMetaValid;
@@ -203,7 +203,7 @@ module tcp_top_loopback #(
     .rst(reset),
     .rx_data_TVALID(toAdderValid),
     .rx_data_TREADY(toAdderReady),
-    .rx_data_TDATA(toAdderData),
+    .rx_data_TDATA(toAdderData[511:0]),
     .tx_data_TDATA(intData),
     .tx_data_TVALID(intValid),
     .tx_data_TREADY(intReady),
@@ -225,11 +225,10 @@ module tcp_top_loopback #(
     .s_axis_rx_data_TVALID(intValid),
     .s_axis_rx_data_TLAST(intLast), //batch last
     .s_axis_rx_data_TDATA(intData),
-    .batch_gradient_TDATA(fromAdderData),
-    .batch_gradient_TVALID(fromAdderValid)
-    //.packet_gradient_TLAST(fromAdderData[512])
+    .batch_gradient_TDATA(fromAdderData[511:0]),
+    .batch_gradient_TVALID(fromAdderValid),
+    .batch_gradient_TLAST(fromAdderData[512])
     );
-  assign fromAdderData[512] = 1'b0;
   //////////////////
   //Adder logic ends
   //////////////////
@@ -276,14 +275,14 @@ module tcp_top_loopback #(
     //assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[512];
     //assign sesspackMetaReady = splitPreReady & fromAdderValid & fromAdderData[32];
     //assign splitPreData[63+32:0] = {fromAdderData[511:0],sesspackMeta};
-    assign splitPreData[63+512:0] = {fromAdderData[511:0],sesspackMeta};
+    assign splitPreData[64+511:0] = {fromAdderData[511:0],sesspackMeta};
     //assign splitPreData[63+32:0] = {fromAdderData[31:0],sesspackMeta};
-    //assign splitPreData[64+512] = fromAdderData[512]; 
-    assign splitPreData[64+512] = 1'b0;
+    assign splitPreData[64+512] = fromAdderData[512]; 
+    //assign splitPreData[64+512] = 1'b0;
     //assign splitPreData[64+32] = fromAdderData[32]; // last signal
        
    nukv_fifogen #(
-            .DATA_SIZE(64+511+1),
+            .DATA_SIZE(64+512+1),
             //.DATA_SIZE(64+31+1),
             .ADDR_BITS(6)
         ) fifo_splitprepare (
@@ -302,13 +301,13 @@ module tcp_top_loopback #(
    wire ignoreProps;
    reg[7:0] dataTokens;
 
-   assign   finalOutLast = finalOutData[512+64];
+   assign   finalOutLast = finalOutData[64+512];
    //assign finalOutLast = finalOutData[32+64];
    //assign   maxis_tx_valid = finalOutValid & finalOutReady;
   // assign   maxis_tx_data = finalOutData[511+64:64];
   //assign   maxis_tx_data = finalOutData[31+64:64];
-   assign   m_axis_tx_data_TKEEP = 64'hFFFFFFFFFFFFFFFF;
-   //assign   maxis_tx_last = finalOutValid & finalOutLast;
+   assign   m_axis_tx_data_TKEEP = 64'hFFFF;
+   //assign   maxis_tx_last = finalOutValid & finalOutLast;c
    
   //assign   finalOutReady = maxis_meta_ready & maxis_tx_ready;
    assign   finalOutReady =  dataTokens == 0 ? 0 :  m_axis_tx_data_TREADY; //change how to assign finalOutReady
@@ -335,9 +334,10 @@ module tcp_top_loopback #(
   assign m_axis_tx_data_TDATA = finalOutData[512+64:64];
   //assign m_axis_tx_data_TDATA = m_axis_tx_data_COMBINED[31:0];
   //assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[512]; 
-  assign m_axis_tx_data_TLAST = finalOutData[512+64];
+  //assign m_axis_tx_data_TLAST = 1'b1;
   //assign m_axis_tx_data_TLAST = m_axis_tx_data_COMBINED[32];
-  assign m_axis_tx_data_TVALID = finalOutValid & finalOutReady;      
+  assign m_axis_tx_data_TVALID = finalOutValid & finalOutReady;  
+  assign m_axis_tx_data_TLAST = finalOutValid & finalOutReady;     
                     
   ////////////handshake logic start////////////////////////////////
   ///////Send meta data first wait for reply of status/////////////
@@ -390,7 +390,7 @@ module tcp_top_loopback #(
 
           if (m_axis_tx_metadata_TREADY==1) begin
             m_axis_tx_metadata_TVALID <= sesspackMetaValid; 
-            m_axis_tx_metadata_TDATA <= sesspackMeta;
+            m_axis_tx_metadata_TDATA <= {16'h10, sesspackMeta[15:0]}; //length of the packet
 
             if (sesspackMetaValid==1) begin
               waitingForStatusWord <= waitingForStatusWord+1;
